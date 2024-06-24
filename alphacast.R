@@ -217,12 +217,9 @@ upload_data_from_csv <- function(api_key, dataset_id, csv,
   writeLines(csv, temp_file)
 
   initializer_string <- toJSON(initializer, auto_unbox = TRUE)
-  print(initializer_string)
 
   files <- list(data = upload_file(temp_file, type = "text/csv"),
                 manifest = initializer_string)
-
-  print(files)
 
   response <- PUT(url, body = files,
                   authenticate(api_key, ""), encode = "multipart")
