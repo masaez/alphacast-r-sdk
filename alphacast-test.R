@@ -16,3 +16,9 @@ upload_data_from_df(api_key, dataset_id, df = csv,
                     date_format = "%Y-%m-%d",
                     entities_column_names = list("country",
         "Alimentos y bebidas no alcohólicas")) # nolint: indentation_linter.
+
+data2 <- download_dataset_data(api_key = api_key,
+                              dataset_id = 42032,
+                              start_date = as.Date("2017-01-01", "%Y-%m-%d"),
+                              end_date = as.Date("2018-01-31", "%Y-%m-%d"))
+

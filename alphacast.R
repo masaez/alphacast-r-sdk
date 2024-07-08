@@ -69,13 +69,13 @@ get_dataset_column_definitions <- function(api_key, dataset_id) {
   return(response$columnDefinitions)
 }
 
-download_dataset_data <- function(api_key, dataset_id, format = "csv",
+download_dataset_data <- function(api_key, dataset_id,
                                   start_date = NULL, end_date = NULL,
                                   filter_variables = list(),
                                   filter_entities = list()) {
   date_column_name <- "Date"
   all_filters <- list()
-  entity_query_filter <- ""
+  entity_query_filter <- NULL
 
   if (length(filter_entities) > 0) {
     entity_query_params <- sapply(names(filter_entities), function(entity) {
@@ -89,9 +89,11 @@ download_dataset_data <- function(api_key, dataset_id, format = "csv",
   date_filters <- c()
   if (!is.null(start_date) || !is.null(end_date)) {
     columns <- get_dataset_column_definitions(api_key, dataset_id)
-    date_column_name <- columns[sapply(columns,
-                                  function(c) c$dataType == "Date"
-                                ), "sourceName"]
+    date_columns <- columns[sapply(columns, function(c) c$dataType == "Date")]
+    if (length(date_columns) == 0) {
+      stop("No date columns found in dataset.")
+    }
+    date_column_name <- sapply(date_columns, function(c) c$sourceName)
 
     if (!is.null(start_date)) {
       date_filters <- c(date_filters, paste0("'", date_column_name,
@@ -118,26 +120,13 @@ download_dataset_data <- function(api_key, dataset_id, format = "csv",
     all_filters[["$select"]] <- paste(filter_variables, collapse = ",")
   }
 
-  query_string <- URLencode(http_build_query(all_filters))
-
-  if (nchar(query_string) > 0) {
-    query_string <- paste0("&", query_string)
-  }
-
-  return_format <- format
-  if (format == "dataframe") return_format <- "csv"
+  base_url = paste0("/datasets/", dataset_id, "/data")
+  query_string <- modify_url(base_url, query = all_filters)
 
   response <- api_request(api_key, "GET",
-                          paste0("/datasets/", dataset_id, "/data?",
-                                 query_string, "&$format=", return_format))
+                          paste0(query_string, "&$format=csv"))
 
-  if (format == "json") {
-    return(response)
-  } else if (format == "dataframe") {
-    return(read_csv(content(response, "text")))
-  } else {
-    return(content(response, "text"))
-  }
+  return(response)
 }
 
 upload_data_from_df <- function(api_key, dataset_id, df,
