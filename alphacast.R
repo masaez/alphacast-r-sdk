@@ -89,7 +89,13 @@ download_dataset_data <- function(api_key, dataset_id,
   date_filters <- c()
   if (!is.null(start_date) || !is.null(end_date)) {
     columns <- get_dataset_column_definitions(api_key, dataset_id)
-    date_columns <- columns[sapply(columns, function(c) c$dataType == "Date")]
+    date_columns <- columns[sapply(columns, function(c) {
+      if ("dataType" %in% names(c)) {
+        c$dataType == "Date"
+      } else {
+        FALSE
+      }
+    })]
     if (length(date_columns) == 0) {
       stop("No date columns found in dataset.")
     }
